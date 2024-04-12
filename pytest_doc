@@ -1,0 +1,8 @@
+python -m pytest tests/ (all tests)
+python -m pytest -k filenamekeyword (tests matching keyword)
+python -m pytest tests/utils/test_sample.py (single test file)
+python -m pytest tests/utils/test_sample.py::test_answer_correct (single test method)
+python -m pytest --resultlog=testlog.log tests/ (log output to file)
+python -m pytest -s tests/ (print output to console)
+
+=====================================================
