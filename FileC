@@ -1,4 +1,73 @@
-This is from Feature
-This is change from Feature lalalal
-This is change from Feature Branch
-1234
+import pytest
+from pyspark.sql import SparkSession  # Assuming SparkSession for DataFrame context
+
+def load_data(self):
+        """
+        Load data from preprocessed_sdm_prod.position_sdm, preprocessed_sdm_prod.ir_sdm, and preprocessed_sdm_prod.sales_sdm tables.
+        """
+        self.position_sdm = self.apply_filter_on_loading("preprocessed_sdm_prod.position_sdm").filter(
+            (col("manufacturer") == "P&G"))
+        self.ir_sdm = self.apply_filter_on_loading("preprocessed_sdm_prod.ir_sdm").filter(
+            (col("manufacturer") == "P&G"))
+        self.category_sales_sdm = self.apply_filter_on_loading("preprocessed_sdm_prod.category_sales_sdm").withColumnRenamed("6M_total_sales", "total_sales_6M")
+        # todo: we are missing manufacturer here
+        self.sales_sdm = self.apply_filter_on_loading("preprocessed_sdm_prod.sales_sdm")
+        
+        ========================================
+
+# Mock the apply_filter_on_loading function
+def mock_apply_filter_on_loading(df, table_name):
+    # Simulate filtering based on manufacturer if table_name matches expected ones
+    if table_name in ("position_sdm", "ir_sdm"):
+        return df.filter(col("manufacturer") == "P&G")
+    else:
+        return df
+
+# Create a SparkSession for testing (adapt based on your setup)
+@pytest.fixture(scope="class")
+def spark_session():
+    spark = SparkSession.builder.appName("load_data_tests").getOrCreate()
+    yield spark
+    spark.stop()
+
+class TestLoadData:
+
+    @pytest.mark.usefixtures("spark_session")
+    def test_load_data_filters_correctly(self, spark_session):
+        # Mock apply_filter_on_loading
+        spark_session.udf.register("apply_filter_on_loading", mock_apply_filter_on_loading)
+
+        # Create sample test data (replace with your data creation logic)
+        sample_data = spark_session.createDataFrame([
+            ("A", "P&G", 100),
+            ("B", "Not P&G", 200),
+            ("C", "P&G", 300)
+        ], ["id", "manufacturer", "value"])
+
+        # Create your class instance
+        your_class_instance = YourClass()  # Replace with your class name
+
+        # Call load_data
+        your_class_instance.load_data(spark_session)
+
+        # Assertions: Verify filtered data
+        assert your_class_instance.position_sdm.count() == 2  # 2 rows with "P&G" manufacturer
+        assert any(row.manufacturer == "P&G" for row in your_class_instance.position_sdm.collect())
+
+        # Similar assertions for ir_sdm (if applicable)
+
+    @pytest.mark.usefixtures("spark_session")
+    def test_load_data_renames_column(self, spark_session):
+        # Mock apply_filter_on_loading
+        spark_session.udf.register("apply_filter_on_loading", mock_apply_filter_on_loading)
+
+        # Sample data (replace with data creation logic)
+        sample_data = spark_session.createDataFrame([
+            (1, "category", 10000, 5000)
+        ], ["id", "category", "6M_total_sales", "other_column"])
+
+        # Create your class instance
+        your_class_instance = YourClass()
+
+        # Call load_data
+        your_class_instance.load_data(spark
